@@ -4,8 +4,12 @@ import torch
 from numpy import ndarray
 from scipy import sparse as sp
 
-from attacker import RND
+from attacker import RND, MyAttacker
 from core import Judge
+from core import GCN
+import pickle
+from pathlib import Path
+
 
 
 # DO NOT modify
@@ -38,7 +42,7 @@ def attack(adj: sp.csr_matrix, features: sp.csr_matrix, labels: ndarray,
     """
     # TODO: Setup your attack model
     # print(f'other args: {kwargs}')
-    model = RND()
+    model = MyAttacker()
     model = model.to(device)
     model.attack(features, adj, labels, idx_train, target_node, n_perturbations=n_perturbations, **kwargs)
     return model.modified_adj
@@ -52,17 +56,22 @@ if __name__ == '__main__':
     device = torch.device('cuda' if cuda and args.use_gpu else 'cpu')
 
     judge = Judge(args.data_path, args.model_path, args.input_file, device=device)
-    judge.multi_test(attack)
 
     # You can pass other arguments like this
     # judge.multi_test(attack, arg1='foo', args2='bar')
-
+    foo = 1
     # FYI: You can load the data like this
-    # data = pickle.load(Path(args.data_path).open('rb'))
-    # adj, features, labels, idx_train, idx_val, idx_test = data
+    data = pickle.load(Path(args.data_path).open('rb'))
+    adj, features, labels, idx_train, idx_val, idx_test = data
 
     # FYI: setup the surrogate model
     # from core import GCN
-    # surrogate = GCN(nfeat=features.shape[1], nclass=labels.max().item()+1, nhid=16, dropout=0, with_relu=False, with_bias=False, device=device)
-    # surrogate = surrogate.to(device)
-    # surrogate.fit(features, adj, labels, idx_train, idx_val, patience=30)
+    surrogate = GCN(nfeat=features.shape[1], nclass=labels.max().item()+1, nhid=16, dropout=0, with_relu=False, with_bias=False, device=device)
+    surrogate = surrogate.to(device)
+    surrogate.fit(features, adj, labels, idx_train, idx_val, patience=30)
+    w1,w2 = surrogate.get_weight()
+    w1 = w1.cpu().detach().numpy() 
+    w2 = w2.cpu().detach().numpy() 
+
+
+    judge.multi_test(attack, W1 = w1, W2 = w2)

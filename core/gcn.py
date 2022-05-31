@@ -100,6 +100,9 @@ class GCN(nn.Module):
         self.best_output = None
         self.adj_norm = None
         self.features = None
+    
+    def get_weight(self):
+        return self.gc1.weight, self.gc2.weight
 
     def forward(self, x, adj):
         if self.with_relu:
