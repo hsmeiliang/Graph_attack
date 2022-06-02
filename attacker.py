@@ -474,11 +474,12 @@ class MyAttacker(BaseAttack):
             modified_adj[node1, node2] = 1 - modified_adj[node1, node2]
             modified_adj[node2, node1] = 1 - modified_adj[node2, node1]
         
-        preprocessed_adj = self.preprocess_graph(modified_adj).tolil()
+        # preprocessed_adj = self.preprocess_graph(modified_adj).tolil()
         # print('modified_adj', preprocessed_adj[:1])
-        self.check_adj(preprocessed_adj)
+        # self.check_adj(preprocessed_adj)
 
-        self.modified_adj = preprocessed_adj
+        self.modified_adj = modified_adj
+        # print(((init_adj.toarray() - modified_adj.toarray())**2).sum() / 2)
     print("done")
 
 
