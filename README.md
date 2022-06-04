@@ -1,6 +1,12 @@
 # Data Science HW4
 
 ## Please install anaconda & cuda 11.3 (if you want to use gpu) first.
+We also use the following libs in attacker.py
+```
+import torch
+from numba import jit
+import numba
+```
 
 ## Create the Environment
 ```

@@ -1,11 +1,10 @@
 import numpy as np
 import scipy.sparse as sp
-from sklearn.covariance import log_likelihood
 from torch.nn.modules.module import Module
 
 import torch
-from torch.nn.parameter import Parameter
 from numba import jit
+import numba
 
 
 class BaseAttack(Module):
@@ -271,7 +270,9 @@ class MyAttacker(BaseAttack):
         twohop_ixs = np.array(A_hat_sq.nonzero()).T
         degrees = modified_adj.sum(0).A1 + 1
 
-        ixs, vals = compute_new_a_hat_uv(edges, node_ixs, edges_set, twohop_ixs, values_before, degrees, potential_edges, target_node)
+        # reflected list, edge_set, is scheduled for deprecation
+        # sol: https://stackoverflow.com/questions/68123204/numba-how-to-avoid-type-reflected-list-found-for-argument-warning
+        ixs, vals = compute_new_a_hat_uv(edges, node_ixs, numba.typed.List(edges_set), twohop_ixs, values_before, degrees, potential_edges, target_node)
 
         ixs_arr = np.array(ixs)
         a_hat_uv = sp.coo_matrix((vals, (ixs_arr[:, 0], ixs_arr[:, 1])), shape = [len(potential_edges), N])
@@ -353,7 +354,6 @@ class MyAttacker(BaseAttack):
         
         # Adjacency matrix
         adj = ori_adj.copy().tolil()
-        init_adj = adj.copy().tolil()
         modified_adj = ori_adj.tolil()
 
         adj_no_selfloops = ori_adj.copy()
@@ -393,7 +393,7 @@ class MyAttacker(BaseAttack):
 
         # print("##### Attack only using structure perturbations #####")
         # Setup starting values of the likelihood ratio test.
-        degree_sequence_start = init_adj.sum(0).A1
+        degree_sequence_start = adj.sum(0).A1
         current_degree_sequence = adj.sum(0).A1
 
         d_min = 2
@@ -410,7 +410,6 @@ class MyAttacker(BaseAttack):
         # print('log_likelihood_orig', type(log_likelihood_orig), log_likelihood_orig)
 
         # print("##### Attacking the node directly #####")
-        influencers = [target_node]
         potential_edges = np.column_stack((np.tile(target_node, N-1), np.setdiff1d(np.arange(N), target_node)))
         potential_edges = potential_edges.astype("int32")
 
@@ -474,13 +473,9 @@ class MyAttacker(BaseAttack):
             modified_adj[node1, node2] = 1 - modified_adj[node1, node2]
             modified_adj[node2, node1] = 1 - modified_adj[node2, node1]
         
-        # preprocessed_adj = self.preprocess_graph(modified_adj).tolil()
-        # print('modified_adj', preprocessed_adj[:1])
-        # self.check_adj(preprocessed_adj)
-
-        self.modified_adj = modified_adj
         # print(((init_adj.toarray() - modified_adj.toarray())**2).sum() / 2)
-    print("done")
+        self.modified_adj = modified_adj
+    # print("done")
 
 
 @jit(nopython=True)
