@@ -1,12 +1,6 @@
 # Data Science HW4
 
 ## Please install anaconda & cuda 11.3 (if you want to use gpu) first.
-We also use the following libs in attacker.py
-```
-import torch
-from numba import jit
-import numba
-```
 
 ## Create the Environment
 ```
@@ -20,6 +14,19 @@ conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch -y
 * without gpu support
 ```
 conda install pytorch torchvision torchaudio cpuonly -c pytorch -y
+```
+
+## Python version
+```
+Python 3.8.8
+```
+
+## Package version
+```
+numba 0.53.1
+numpy 1.20.1
+torch 1.11.0
+scipy 1.6.2
 ```
 
 ## Run
